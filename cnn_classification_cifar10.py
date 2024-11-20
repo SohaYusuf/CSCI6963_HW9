@@ -1,5 +1,5 @@
 import torchvision
-from model import CNN_small
+from model import CNN_small, count_parameters
 import numpy as np
 import torch
 from torch.utils.data import Subset
@@ -119,6 +119,10 @@ if __name__ == '__main__':
     # create neural network object
     network = CNN_small(in_dim=input_dim, out_dim=out_dim)
     network = network.to(device)
+
+    # Compute the total number of parameters
+    total_params = count_parameters(network)
+    print(f"Total number of parameters: {total_params}")
 
     # set up optimizer
     optimizer = optim.SGD(network.parameters(), lr=learning_rate, momentum=momentum)
