@@ -55,8 +55,8 @@ class CNN_small(nn.Module):
         self.out_dim = out_dim        
 
         self.layer1_filters = 16  
-        self.layer2_filters = 16  
-        self.layer3_filters = 16  
+        self.layer2_filters = 32 
+        self.layer3_filters = 32  
 
         self.kernel_size = (3, 3)
         self.stride = 1
