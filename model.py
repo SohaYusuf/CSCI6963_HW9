@@ -45,6 +45,7 @@ class CNN(nn.Module):
     def forward(self, x):
         pass
 
+
 class CNN_small(nn.Module):
     
     def __init__(self, in_dim, out_dim):
@@ -53,33 +54,58 @@ class CNN_small(nn.Module):
         self.in_dim = in_dim
         self.out_dim = out_dim        
 
-        self.fc_layer_neurons = 200
+        self.layer1_filters = 16  
+        self.layer2_filters = 16  
+        self.layer3_filters = 16  
 
-        self.layer1_filters = 32
+        self.kernel_size = (3, 3)
+        self.stride = 1
+        self.padding = 1
 
-        self.layer1_kernel_size = (4,4)
-        self.layer1_stride = 1
-        self.layer1_padding = 0
+        # First Convolutional Layer
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(3, self.layer1_filters, self.kernel_size, stride=self.stride, padding=self.padding),
+            nn.BatchNorm2d(self.layer1_filters),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2)  # Max pooling to reduce spatial dimensions
+        )
 
-        #NB: these calculations assume:
-        #1) padding is 0;
-        #2) stride is picked such that the last step ends on the last pixel, i.e., padding is not used
-        self.layer1_dim_h = (self.in_dim[1] - self.layer1_kernel_size[0]) / self.layer1_stride + 1
-        self.layer1_dim_w = (self.in_dim[2] - self.layer1_kernel_size[1]) / self.layer1_stride + 1        
+        # Second Convolutional Layer
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(self.layer1_filters, self.layer2_filters, self.kernel_size, stride=self.stride, padding=self.padding),
+            nn.BatchNorm2d(self.layer2_filters),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2)  # Max pooling to further reduce spatial dimensions
+        )
 
-        self.conv1 = nn.Conv2d(3, self.layer1_filters, self.layer1_kernel_size, stride=self.layer1_stride, padding=self.layer1_padding)
+        # Third Convolutional Layer
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(self.layer2_filters, self.layer3_filters, self.kernel_size, stride=self.stride, padding=self.padding),
+            nn.BatchNorm2d(self.layer3_filters),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2)  # Max pooling to reduce spatial dimensions
+        )
 
-        self.fc_inputs = int(self.layer1_filters * self.layer1_dim_h * self.layer1_dim_w)
+        # Flatten the output from conv3 and calculate the input size for the fully connected layer
+        self.fc_inputs = self.layer3_filters * 4 * 4  # Output size after 3x2 pooling layers, reducing height and width to 4x4
 
-        self.lin1 = nn.Linear(self.fc_inputs, self.fc_layer_neurons)
-
-        self.lin2 = nn.Linear(self.fc_layer_neurons, self.out_dim)
+        # Single fully connected layer
+        self.fc = nn.Sequential(
+            nn.Linear(self.fc_inputs, self.out_dim)  # Only one fully connected layer with output size equal to number of classes (out_dim)
+        )
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
 
-        # flatten convolutional layer into vector
-        x = x.view(x.size(0), -1)
-        x = F.relu(self.lin1(x))
-        x = self.lin2(x)
+        x = x.view(x.size(0), -1)  # Flatten the output for the fully connected layer
+        x = self.fc(x)
         return x
+
+
+
+# Function to calculate the total number of parameters
+def count_parameters(model):
+    total_params = sum(p.numel() for p in model.parameters())
+    return total_params
