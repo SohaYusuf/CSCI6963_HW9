@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
+import random
 
 class FC(nn.Module):
     
@@ -185,8 +186,8 @@ def plot_results(train_list, test_list, plot_accuracy=True, plot_loss=False):
         ylabel = 'Loss'
 
     # Plotting both training and test accuracy
-    plt.plot(epochs, train_list, label=label1, color='blue', marker='o')
-    plt.plot(epochs, test_list, label=label2, color='orange', marker='o')
+    plt.plot(train_list, label=label1, color='blue', marker='o')
+    plt.plot(test_list, label=label2, color='orange', marker='o')
 
     # Configure x-axis and y-axis
     plt.xscale('linear')  # Change to 'log' if you want logarithmic scaling
@@ -205,3 +206,32 @@ def plot_results(train_list, test_list, plot_accuracy=True, plot_loss=False):
     # Save the figure
     plt.savefig(name, bbox_inches="tight", dpi=300)
     plt.show()  # Display the plot
+
+
+def plot_data_images(train_dataset, name):
+
+    # Number of images to display
+    num_images = 20
+
+    # Get random indices from the dataset
+    random_indices = random.sample(range(len(train_dataset)), num_images)
+
+    # Create a figure to display the images
+    plt.figure(figsize=(12,6))
+
+    for i, idx in enumerate(random_indices):
+        # Get the image and label
+        image, label = train_dataset[idx]
+        
+        # Permute the image dimensions for plotting (C, H, W) to (H, W, C)
+        image = image.permute(1, 2, 0)
+        
+        # Create a subplot for each image
+        plt.subplot(4, 5, i + 1)  # 4 rows and 5 columns
+        plt.imshow(image)
+        plt.title(f'Label: {label}')  # Show label if needed
+        plt.axis('off')  # Hide axes
+
+    plt.tight_layout()
+    plt.savefig(name, dpi=300)
+    plt.show()

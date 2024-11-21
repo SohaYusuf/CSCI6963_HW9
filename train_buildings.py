@@ -126,7 +126,9 @@ if __name__ == '__main__':
     train_dataset = BuildingDataset(train_labels_dir, data_dir, transform=train_transforms)
     val_dataset = BuildingDataset(train_labels_dir, data_dir, transform=test_transforms)
 
-    # Plotting (leaving this here in case you'd like to take a look)
+    plot_data_images(train_dataset, name='buildings_images.png')
+
+    # # Plotting (leaving this here in case you'd like to take a look)
     # image = train_dataset[10][0]
     # image = image.permute(1,2,0)
 
@@ -138,7 +140,7 @@ if __name__ == '__main__':
     # set training hyperparameters
     train_batch_size = 100
     test_batch_size = 100
-    n_epochs = 25
+    n_epochs = 30
     learning_rate = 1e-3
     seed = 100
     input_dim = (3, new_h, new_w)
@@ -193,8 +195,8 @@ if __name__ == '__main__':
     torch.save(network.state_dict(), PATH)
 
     # Save the accuracies to separate text files
-    np.savetxt('train_accuracies.txt', train_accuracy_list, header='Train Accuracy', delimiter=',', fmt='%f')
-    np.savetxt('test_accuracies.txt', test_accuracy_list, header='Test Accuracy', delimiter=',', fmt='%f')
+    np.savetxt('RPI_train_accuracies.txt', train_accuracy_list, header='Train Accuracy', delimiter=',', fmt='%f')
+    np.savetxt('RPI_test_accuracies.txt', test_accuracy_list, header='Test Accuracy', delimiter=',', fmt='%f')
 
     plot_results(train_accuracy_list, test_accuracy_list, plot_accuracy=True)
-    plot_results(train_loss_list, None, plot_loss=True)
+    plot_results(train_loss_list, test_loss_list, plot_loss=True)

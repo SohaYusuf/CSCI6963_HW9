@@ -1,5 +1,5 @@
 import torchvision
-from model import CNN_small, count_parameters
+from model import *
 import numpy as np
 import torch
 from torch.utils.data import Subset
@@ -45,23 +45,26 @@ def test(net, loader, device):
     test_loss = 0
     correct = 0
     total = 0
+    total_samples = 0
 
     with torch.no_grad():
         for data, target in loader:
             data, target = data.to(device), target.to(device)
 
-            output = net(data)
+            # output = net(data)
+            output = F.log_softmax(net(data), dim=1)
             test_loss += F.nll_loss(output, target, size_average=False).item()
             pred = output.data.max(1, keepdim=True)[1]
             correct += (pred.eq(target.data.view_as(pred)).sum().item())
+            total_samples += target.size(0)  # Count number of samples
 
             total = total + 1
 
     print('Test set: Avg. loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)'.format(
-        test_loss, correct, len(loader.dataset),
+        test_loss / total_samples, correct, len(loader.dataset),
         (100. * correct / len(loader.dataset))), flush=True)
 
-    return 100.0 * correct / len(loader.dataset)
+    return 100.0 * correct / len(loader.dataset), test_loss / total_samples
 
 
 def train(net, loader, optimizer, epoch, device, log_interval=100):
@@ -69,6 +72,9 @@ def train(net, loader, optimizer, epoch, device, log_interval=100):
     net.train()
 
     correct = 0
+    total_loss = 0.0
+    total_samples = 0
+
     for batch_idx, (data, target) in enumerate(loader):
 
         data, target = data.to(device), target.to(device)
@@ -87,11 +93,15 @@ def train(net, loader, optimizer, epoch, device, log_interval=100):
         pred = output.data.max(1, keepdim=True)[1]
         correct += (pred.eq(target.data.view_as(pred)).sum().item())
 
+        total_loss += loss.item() * data.size(0)  # accumulate loss
+        total_samples += data.size(0)              # accumulate number of samples
+
         if batch_idx % log_interval == 0:
             print('\nTrain Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(loader.dataset), 100. * batch_idx / len(loader), loss.item()), flush=True)
 
     print('\tAccuracy: {:.2f}%'.format(100.0 * correct / len(loader.dataset)), flush=True)
+    return 100.0 * correct / len(loader.dataset), total_loss / total_samples
 
 
 if __name__ == '__main__':
@@ -116,6 +126,8 @@ if __name__ == '__main__':
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=test_batch_size, shuffle=False)
 
+    plot_data_images(train_dataset, name='CIFAR10.png')
+
     # create neural network object
     network = CNN_small(in_dim=input_dim, out_dim=out_dim)
     network = network.to(device)
@@ -127,7 +139,26 @@ if __name__ == '__main__':
     # set up optimizer
     optimizer = optim.SGD(network.parameters(), lr=learning_rate, momentum=momentum)
 
+    train_accuracy_list = []
+    test_accuracy_list = []
+
+    train_loss_list = []
+    test_loss_list = []
+
     # training loop
     for epoch in range(1, n_epochs + 1):
-        train(network, train_loader, optimizer, epoch, device)
-        test(network, test_loader, device)
+        train_acc, train_loss = train(network, train_loader, optimizer, epoch, device)
+        test_acc, test_loss = test(network, test_loader, device)
+
+        train_accuracy_list.append(train_acc)
+        test_accuracy_list.append(test_acc)
+
+        train_loss_list.append(train_loss)
+        test_loss_list.append(test_loss)
+
+    # Save the accuracies to separate text files
+    np.savetxt('CIFAR10_train_accuracies.txt', train_accuracy_list, header='Train Accuracy', delimiter=',', fmt='%f')
+    np.savetxt('CIFAR10_test_accuracies.txt', test_accuracy_list, header='Test Accuracy', delimiter=',', fmt='%f')
+
+    plot_results(train_accuracy_list, test_accuracy_list, plot_accuracy=True)
+    plot_results(train_loss_list, test_loss_list, plot_loss=True)
