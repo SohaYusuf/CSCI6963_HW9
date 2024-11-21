@@ -89,7 +89,9 @@ def train(net, loader, optimizer, epoch, device, log_interval=1):
             print('\nTrain Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(loader.dataset), 100. * batch_idx / len(loader), loss.item()), flush=True)
 
-    print('\tAccuracy: {:.2f}%'.format(100.0 * correct / len(loader.dataset)), flush=True)  
+    accuracy = 100.0 * correct / len(loader.dataset)
+    print('\tAccuracy: {:.2f}%'.format(accuracy), flush=True)  
+    return accuracy
 
 
 if __name__ == '__main__':
@@ -162,6 +164,8 @@ if __name__ == '__main__':
     # sanity check -- output should be close to 1/11
     print('Initial accuracy', flush=True)
     test(network, test_loader, device)
+
+    train_accuracy_list = []
 
     # training loop
     for epoch in range(1, n_epochs + 1):
