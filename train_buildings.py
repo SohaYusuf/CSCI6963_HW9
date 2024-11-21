@@ -43,24 +43,27 @@ def test(net, loader, device):
     test_loss = 0
     correct = 0
     total = 0
+    total_samples = 0
 
     with torch.no_grad():
         for data, target in loader:
 
             data, target = data.to(device), target.to(device)
             
-            output = net(data)
+            # output = net(data)
+            output = F.log_softmax(net(data), dim=1)
             test_loss += F.nll_loss(output, target, reduction='sum').item()
             pred = output.data.max(1, keepdim=True)[1]
             correct += (pred.eq(target.data.view_as(pred)).sum().item())
+            total_samples += target.size(0)  # Count number of samples
             
             total = total + 1
 
     print('Test set: Avg. loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)'.format(
-        test_loss, correct, len(loader.dataset),
+        test_loss / total_samples, correct, len(loader.dataset),
         (100. * correct / len(loader.dataset))), flush=True)
     
-    return 100.0 * correct / len(loader.dataset), test_loss
+    return 100.0 * correct / len(loader.dataset), test_loss / total_samples
 
 def train(net, loader, optimizer, epoch, device, log_interval=1):
     # prepare model for training (only important for dropout, batch norm, etc.)
@@ -188,7 +191,7 @@ if __name__ == '__main__':
         test_loss_list.append(test_loss)
 
     torch.save(network.state_dict(), PATH)
-    
+
     # Save the accuracies to separate text files
     np.savetxt('train_accuracies.txt', train_accuracy_list, header='Train Accuracy', delimiter=',', fmt='%f')
     np.savetxt('test_accuracies.txt', test_accuracy_list, header='Test Accuracy', delimiter=',', fmt='%f')
