@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
 
 class FC(nn.Module):
     
@@ -160,23 +161,37 @@ def count_parameters(model):
     return total_params
 
 
-def plot_accuracies(train_accuracy_list, test_accuracy_list):
+def plot_results(train_list, test_list, plot_accuracy=True, plot_loss=False):
 
-    epochs = range(1, len(train_accuracy_list) + 1)  # Create a range for epochs
+    epochs = range(1, len(train_list) + 1)  # Create a range for epochs
 
     # Set up the plot
     fontsize = 25
     plt.figure(figsize=(8, 6))
     plt.gca().set_facecolor('#F5F5F5')
 
+    if plot_accuracy:
+        name = 'accuracy_plot.png'  
+        label1 = 'Train Accuracy'
+        label2 = 'Test Accuracy'
+        xlabel = 'Epochs'
+        ylabel = 'Accuracy'
+
+    if plot_loss:
+        name = 'loss_plot.png'  
+        label1 = 'Train loss'
+        label2 = 'Test loss'
+        xlabel = 'Epochs'
+        ylabel = 'Loss'
+
     # Plotting both training and test accuracy
-    plt.plot(epochs, train_accuracy_list, label='Train Accuracy', color='blue', marker='o')
-    plt.plot(epochs, test_accuracy_list, label='Test Accuracy', color='orange', marker='o')
+    plt.plot(epochs, train_list, label=label1, color='blue', marker='o')
+    plt.plot(epochs, test_list, label=label2, color='orange', marker='o')
 
     # Configure x-axis and y-axis
     plt.xscale('linear')  # Change to 'log' if you want logarithmic scaling
-    plt.xlabel('Epochs', fontsize=fontsize)
-    plt.ylabel('Accuracy', fontsize=fontsize)
+    plt.xlabel(xlabel, fontsize=fontsize)
+    plt.ylabel(ylabel, fontsize=fontsize)
 
     # Add a legend and grid
     plt.legend(fontsize=fontsize)
@@ -188,6 +203,5 @@ def plot_accuracies(train_accuracy_list, test_accuracy_list):
     plt.yticks(fontsize=fontsize)
 
     # Save the figure
-    name = 'accuracy_plot.png'  # Change this to your desired filename
     plt.savefig(name, bbox_inches="tight", dpi=300)
     plt.show()  # Display the plot
