@@ -143,7 +143,7 @@ if __name__ == '__main__':
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True)
     test_loader = torch.utils.data.DataLoader(val_dataset, batch_size=test_batch_size, shuffle=False)
 
-    network = CNN(in_dim=input_dim, out_dim=out_dim, n_layers=4)
+    network = CNN(in_dim=input_dim, out_dim=out_dim, n_layers=5)
     network = network.to(device)
 
     # Compute the total number of parameters
@@ -166,10 +166,16 @@ if __name__ == '__main__':
     test(network, test_loader, device)
 
     train_accuracy_list = []
+    test_accuracy_list = []
 
     # training loop
     for epoch in range(1, n_epochs + 1):
-        train(network, train_loader, optimizer, epoch, device)
-        test(network, test_loader, device)
+        train_acc = train(network, train_loader, optimizer, epoch, device)
+        test_acc = test(network, test_loader, device)
+
+        train_accuracy_list.append(train_acc)
+        test_accuracy_list.append(test_acc)
 
     torch.save(network.state_dict(), PATH)
+    
+    plot_accuracies(train_accuracy_list, test_accuracy_list)

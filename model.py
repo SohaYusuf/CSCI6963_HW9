@@ -55,7 +55,7 @@ class CNN(nn.Module):
         self.n_layers = n_layers
 
         # Define filter sizes for each layer
-        self.filters = [16, 32, 32, 64]  # You can extend this list for more layers
+        self.filters = [16, 32, 32, 64, 64]  # You can extend this list for more layers
 
         self.kernel_size = (3, 3)
         self.stride = 1
@@ -158,3 +158,36 @@ class CNN_small(nn.Module):
 def count_parameters(model):
     total_params = sum(p.numel() for p in model.parameters())
     return total_params
+
+
+def plot_accuracies(train_accuracy_list, test_accuracy_list):
+
+    epochs = range(1, len(train_accuracy_list) + 1)  # Create a range for epochs
+
+    # Set up the plot
+    fontsize = 25
+    plt.figure(figsize=(8, 6))
+    plt.gca().set_facecolor('#F5F5F5')
+
+    # Plotting both training and test accuracy
+    plt.plot(epochs, train_accuracy_list, label='Train Accuracy', color='blue', marker='o')
+    plt.plot(epochs, test_accuracy_list, label='Test Accuracy', color='orange', marker='o')
+
+    # Configure x-axis and y-axis
+    plt.xscale('linear')  # Change to 'log' if you want logarithmic scaling
+    plt.xlabel('Epochs', fontsize=fontsize)
+    plt.ylabel('Accuracy', fontsize=fontsize)
+
+    # Add a legend and grid
+    plt.legend(fontsize=fontsize)
+    plt.grid(color='#D3D3D3', linestyle='-', linewidth=0.5)  # Light gray fine grid
+    plt.grid(True)
+
+    # Configure tick labels
+    plt.xticks(fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+
+    # Save the figure
+    name = 'accuracy_plot.png'  # Change this to your desired filename
+    plt.savefig(name, bbox_inches="tight", dpi=300)
+    plt.show()  # Display the plot
