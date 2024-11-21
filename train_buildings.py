@@ -3,7 +3,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import Subset
 import torchvision
-from model import CNN
+from model import CNN, count_parameters
 
 from dataset import BuildingDataset
 
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     train_transforms = torchvision.transforms.Compose([resize, convert, normalize])
     test_transforms = torchvision.transforms.Compose([resize, convert, normalize])
 
-    data_dir = '/gpfs/u/scratch/RNL2/shared/data'
+    data_dir = 'data/'
     train_labels_dir = os.path.join(data_dir, 'train_labels.csv')
     val_labels_dir = os.path.join(data_dir, 'val_labels.csv')
 
@@ -128,19 +128,25 @@ if __name__ == '__main__':
     # set training hyperparameters
     train_batch_size = 100
     test_batch_size = 100
-    n_epochs = 10
+    n_epochs = 30
     learning_rate = 1e-3
     seed = 100
     input_dim = (3, new_h, new_w)
     out_dim = 11
     momentum = 0.9
 
+    print(f'input_dim: {input_dim}, out_dim: {out_dim}')
+
     # put data into loaders
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True)
     test_loader = torch.utils.data.DataLoader(val_dataset, batch_size=test_batch_size, shuffle=False)
 
-    network = CNN(in_dim=input_dim, out_dim=out_dim)
+    network = CNN(in_dim=input_dim, out_dim=out_dim, n_layers=4)
     network = network.to(device)
+
+    # Compute the total number of parameters
+    total_params = count_parameters(network)
+    print(f"Total number of parameters: {total_params}")
 
     optimizer = optim.SGD(network.parameters(), lr=learning_rate, momentum=momentum)
 

@@ -34,16 +34,65 @@ class FC(nn.Module):
 
         return self.layer_list[self.num_hidden_layers](x)
 
+# class CNN(nn.Module):
+    
+#     def __init__(self, in_dim, out_dim):
+#         super().__init__()
+
+#         self.in_dim = in_dim
+#         self.out_dim = out_dim        
+
+#     def forward(self, x):
+#         pass
+
 class CNN(nn.Module):
     
-    def __init__(self, in_dim, out_dim):
+    def __init__(self, in_dim, out_dim, n_layers=3):
         super().__init__()
 
         self.in_dim = in_dim
         self.out_dim = out_dim        
+        self.n_layers = n_layers
+
+        # Define filter sizes for each layer
+        self.filters = [16, 32, 32, 64]  # You can extend this list for more layers
+
+        self.kernel_size = (3, 3)
+        self.stride = 1
+        self.padding = 1
+        
+        # List to hold convolutional layers
+        self.convs = nn.ModuleList()
+
+        # Create convolutional layers
+        for i in range(n_layers):
+            in_channels = 3 if i == 0 else self.filters[min(i-1, len(self.filters) - 1)]
+            out_channels = self.filters[min(i, len(self.filters) - 1)]
+            self.convs.append(nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, self.kernel_size, stride=self.stride, padding=self.padding),
+                nn.BatchNorm2d(out_channels),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(2, 2)  # Max pooling to reduce spatial dimensions
+            ))
+
+        # Flatten layer calculation depends on input size
+        self.fc = None  # Initialize the fully connected layer
 
     def forward(self, x):
-        pass
+        for conv in self.convs:
+            x = conv(x)
+        
+        # Calculate flattened size dynamically based on the input size
+        x = x.view(x.size(0), -1)  # Flatten the output for the fully connected layer
+        
+        # Initialize fully connected layer if not done in __init__
+        if self.fc is None:
+            self.fc = nn.Linear(x.size(1), self.out_dim).to(x.device)
+        
+        x = self.fc(x)
+        return x
+
+
 
 
 class CNN_small(nn.Module):
