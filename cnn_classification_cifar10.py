@@ -1,3 +1,9 @@
+# Soha Yusuf (RIN: 662011092)
+# Shiuli Subhra Ghosh (RIN: )
+# Jainik Meheta (RIN: )
+
+# python cnn_classification_cifar10.py
+
 import torchvision
 from model import *
 import numpy as np
@@ -106,6 +112,9 @@ def train(net, loader, optimizer, epoch, device, log_interval=100):
 
 if __name__ == '__main__':
 
+    save_path = "results_cifar10/"
+    os.makedirs(save_path, exist_ok=True)
+
     # set hyper-parameters
     train_batch_size = 100
     test_batch_size = 100
@@ -126,7 +135,7 @@ if __name__ == '__main__':
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=test_batch_size, shuffle=False)
 
-    plot_data_images(train_dataset, name='CIFAR10.png')
+    plot_data_images(train_dataset, name=f'{save_path}/CIFAR10.png')
 
     # create neural network object
     network = CNN_small(in_dim=input_dim, out_dim=out_dim)
@@ -157,8 +166,8 @@ if __name__ == '__main__':
         test_loss_list.append(test_loss)
 
     # Save the accuracies to separate text files
-    np.savetxt('CIFAR10_train_accuracies.txt', train_accuracy_list, header='Train Accuracy', delimiter=',', fmt='%f')
-    np.savetxt('CIFAR10_test_accuracies.txt', test_accuracy_list, header='Test Accuracy', delimiter=',', fmt='%f')
-
-    plot_results(train_accuracy_list, test_accuracy_list, plot_accuracy=True)
-    plot_results(train_loss_list, test_loss_list, plot_loss=True)
+    np.savetxt(f'{save_path}/CIFAR10_train_accuracies.txt', train_accuracy_list, header='Train Accuracy', delimiter=',', fmt='%f')
+    np.savetxt(f'{save_path}/CIFAR10_test_accuracies.txt', test_accuracy_list, header='Test Accuracy', delimiter=',', fmt='%f')
+    
+    plot_results(train_accuracy_list, test_accuracy_list, name=f'{save_path}/CIFAR10_accuracy_plot.png', plot_accuracy=True)
+    plot_results(train_loss_list, test_loss_list, name=f'{save_path}/CIFAR10_loss_plot.png', plot_loss=True)

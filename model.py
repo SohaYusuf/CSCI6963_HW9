@@ -36,65 +36,76 @@ class FC(nn.Module):
 
         return self.layer_list[self.num_hidden_layers](x)
 
-# class CNN(nn.Module):
-    
-#     def __init__(self, in_dim, out_dim):
-#         super().__init__()
-
-#         self.in_dim = in_dim
-#         self.out_dim = out_dim        
-
-#     def forward(self, x):
-#         pass
 
 class CNN(nn.Module):
-    
-    def __init__(self, in_dim, out_dim, n_layers=3):
-        super().__init__()
+    """
+    A Convolutional Neural Network for image classification.
 
+    Attributes:
+        in_dim (int): Dimension of input images (height x width x channels).
+        out_dim (int): Number of output classes for classification.
+        n_layers (int): Number of convolutional layers in the network.
+
+    Inputs:
+        x (torch.Tensor): A batch of input images with shape (batch_size, channels, height, width).
+
+    Outputs:
+        torch.Tensor: Class scores for each input image with shape (batch_size, out_dim).
+    """
+    
+    def __init__(self, in_dim, out_dim, n_layers):
+        super(CNN, self).__init__()
+
+        # Store dimensions and layer count
         self.in_dim = in_dim
-        self.out_dim = out_dim        
+        self.out_dim = out_dim
         self.n_layers = n_layers
 
-        # Define filter sizes for each layer
-        self.filters = [16, 32, 32, 64, 64]  # You can extend this list for more layers
+        # Define the number of filters for each layer
+        self.filters = [16, 32, 64, 64, 32]
 
+        # Convolution parameters
         self.kernel_size = (3, 3)
         self.stride = 1
         self.padding = 1
-        
-        # List to hold convolutional layers
-        self.convs = nn.ModuleList()
 
-        # Create convolutional layers
-        for i in range(n_layers):
-            in_channels = 3 if i == 0 else self.filters[min(i-1, len(self.filters) - 1)]
+        # Initialize convolutional layers
+        self.convs = self._make_conv_layers()
+
+        # Placeholder for the fully connected layer
+        self.fc = None
+
+    def _make_conv_layers(self):
+        """Construct convolutional layers and return as a ModuleList."""
+        layers = []
+        for i in range(self.n_layers):
+            in_channels = 3 if i == 0 else self.filters[min(i - 1, len(self.filters) - 1)]
             out_channels = self.filters[min(i, len(self.filters) - 1)]
-            self.convs.append(nn.Sequential(
+
+            layers.append(nn.Sequential(
                 nn.Conv2d(in_channels, out_channels, self.kernel_size, stride=self.stride, padding=self.padding),
                 nn.BatchNorm2d(out_channels),
                 nn.ReLU(inplace=True),
-                nn.MaxPool2d(2, 2)  # Max pooling to reduce spatial dimensions
+                nn.MaxPool2d(kernel_size=2, stride=2)
             ))
-
-        # Flatten layer calculation depends on input size
-        self.fc = None  # Initialize the fully connected layer
+        return nn.ModuleList(layers)
 
     def forward(self, x):
+        """Forward pass through the network."""
         for conv in self.convs:
-            x = conv(x)
+            x = conv(x)  # Apply convolutional layers
         
-        # Calculate flattened size dynamically based on the input size
-        x = x.view(x.size(0), -1)  # Flatten the output for the fully connected layer
+        # Flatten the output
+        x = x.view(x.size(0), -1)
         
-        # Initialize fully connected layer if not done in __init__
+        # Initialize the fully connected layer if needed
         if self.fc is None:
             self.fc = nn.Linear(x.size(1), self.out_dim).to(x.device)
         
+        # Pass through the fully connected layer
         x = self.fc(x)
-        return x
-
-
+        return x 
+ 
 
 
 class CNN_small(nn.Module):
@@ -162,7 +173,7 @@ def count_parameters(model):
     return total_params
 
 
-def plot_results(train_list, test_list, plot_accuracy=True, plot_loss=False):
+def plot_results(train_list, test_list, name, plot_accuracy=True, plot_loss=False):
 
     epochs = range(1, len(train_list) + 1)  # Create a range for epochs
 
@@ -172,14 +183,12 @@ def plot_results(train_list, test_list, plot_accuracy=True, plot_loss=False):
     plt.gca().set_facecolor('#F5F5F5')
 
     if plot_accuracy:
-        name = 'accuracy_plot.png'  
         label1 = 'Train Accuracy'
         label2 = 'Test Accuracy'
         xlabel = 'Epochs'
         ylabel = 'Accuracy'
 
     if plot_loss:
-        name = 'loss_plot.png'  
         label1 = 'Train loss'
         label2 = 'Test loss'
         xlabel = 'Epochs'
@@ -234,4 +243,4 @@ def plot_data_images(train_dataset, name):
 
     plt.tight_layout()
     plt.savefig(name, dpi=300)
-    plt.show()
+    # plt.show()
