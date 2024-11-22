@@ -62,7 +62,7 @@ class CNN(nn.Module):
         self.n_layers = n_layers
 
         # Define the number of filters for each layer
-        self.filters = [16, 32, 64, 64, 32]
+        self.filters = [8, 16, 32, 64, 128]
 
         # Convolution parameters
         self.kernel_size = (3, 3)
@@ -86,7 +86,8 @@ class CNN(nn.Module):
                 nn.Conv2d(in_channels, out_channels, self.kernel_size, stride=self.stride, padding=self.padding),
                 nn.BatchNorm2d(out_channels),
                 nn.ReLU(inplace=True),
-                nn.MaxPool2d(kernel_size=2, stride=2)
+                nn.MaxPool2d(kernel_size=2, stride=2),
+                # nn.Dropout(p=0.05)
             ))
         return nn.ModuleList(layers)
 

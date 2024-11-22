@@ -125,7 +125,15 @@ if __name__ == '__main__':
     resize = torchvision.transforms.Resize(size = (new_h, new_w))
     convert = torchvision.transforms.ConvertImageDtype(torch.float)
     
-    train_transforms = torchvision.transforms.Compose([resize, convert, normalize])
+    # train_transforms = torchvision.transforms.Compose([resize, convert, normalize])
+    # Data augmentation for training
+    train_transforms = torchvision.transforms.Compose([
+        torchvision.transforms.RandomHorizontalFlip(),           # Randomly flip images horizontally
+        torchvision.transforms.RandomCrop(size=(new_h, new_w), padding=4),  # Random crop with padding
+        resize,
+        convert,
+        normalize
+    ])
     test_transforms = torchvision.transforms.Compose([resize, convert, normalize])
 
     data_dir = 'data/'
