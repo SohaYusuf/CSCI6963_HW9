@@ -1,6 +1,6 @@
 # Soha Yusuf (RIN: 662011092)
 # Shiuli Subhra Ghosh (RIN: )
-# Jainik Meheta (RIN: )
+# Jainik Meheta (RIN: 662096080)
 
 # python cnn_classification_cifar10.py
 
@@ -12,6 +12,7 @@ from torch.utils.data import Subset
 import torch.optim as optim
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
+import os
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -116,9 +117,9 @@ if __name__ == '__main__':
     os.makedirs(save_path, exist_ok=True)
 
     # set hyper-parameters
-    train_batch_size = 100
-    test_batch_size = 100
-    n_epochs = 30
+    train_batch_size = 32
+    test_batch_size = 32
+    n_epochs = 50
     learning_rate = 1e-2
     seed = 100
     input_dim = (3,32,32)
@@ -126,8 +127,13 @@ if __name__ == '__main__':
     momentum = 0.9
 
     normalize = torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.225, 0.225, 0.225])
-    train_transforms = torchvision.transforms.Compose([torchvision.transforms.ToTensor(), normalize])
+    # train_transforms = torchvision.transforms.Compose([torchvision.transforms.ToTensor(), normalize])
     test_transforms = torchvision.transforms.Compose([torchvision.transforms.ToTensor(), normalize])
+    train_transforms = torchvision.transforms.Compose([
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.RandomHorizontalFlip(),           # Randomly flip images horizontally
+        normalize
+    ])
 
     train_dataset = torchvision.datasets.CIFAR10('./datasets/', train=True, download=True, transform=train_transforms)
     test_dataset = torchvision.datasets.CIFAR10('./datasets/', train=False, download=True, transform=test_transforms)
@@ -140,6 +146,8 @@ if __name__ == '__main__':
     # create neural network object
     network = CNN_small(in_dim=input_dim, out_dim=out_dim)
     network = network.to(device)
+
+    print(f'input_dim: {input_dim}, out_dim: {out_dim}')
 
     # Compute the total number of parameters
     total_params = count_parameters(network)

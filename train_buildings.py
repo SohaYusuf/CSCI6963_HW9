@@ -1,6 +1,6 @@
 # Soha Yusuf (RIN: 662011092)
 # Shiuli Subhra Ghosh (RIN: )
-# Jainik Meheta (RIN: )
+# Jainik Meheta (RIN: 662096080)
 
 # python train_buildings.py
 
@@ -125,15 +125,11 @@ if __name__ == '__main__':
     resize = torchvision.transforms.Resize(size = (new_h, new_w))
     convert = torchvision.transforms.ConvertImageDtype(torch.float)
     
-    # train_transforms = torchvision.transforms.Compose([resize, convert, normalize])
     # Data augmentation for training
     train_transforms = torchvision.transforms.Compose([
         torchvision.transforms.RandomHorizontalFlip(),           # Randomly flip images horizontally
         torchvision.transforms.RandomVerticalFlip(),
         torchvision.transforms.RandomRotation(degrees=30),
-        # torchvision.transforms.RandomAffine(degrees=0, scale=(0.8, 1.2)),
-        # torchvision.transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
-        # torchvision.transforms.RandomGrayscale(p=0.1),
         torchvision.transforms.RandomCrop(size=(new_h, new_w), padding=4),  # Random crop with padding
         resize,
         convert,
@@ -148,26 +144,14 @@ if __name__ == '__main__':
     train_dataset = BuildingDataset(train_labels_dir, data_dir, transform=train_transforms)
     test_dataset = BuildingDataset(val_labels_dir, data_dir, transform=test_transforms)
 
-    # train_dataset, val_dataset = split_train_val(train_dataset, valid_ratio=0.05)
-
     plot_data_images(train_dataset, name=f'{save_path}/buildings_train_images.png')
-    # plot_data_images(val_dataset, name=f'{save_path}/buildings_val_images.png')
     plot_data_images(test_dataset, name=f'{save_path}/buildings_test_images.png')
 
-    # # Plotting (leaving this here in case you'd like to take a look)
-    # image = train_dataset[10][0]
-    # image = image.permute(1,2,0)
-
-    # plt.figure()
-    # plt.imshow(image)
-    # plt.imshow(torch.reshape(image, (new_h, new_w)), cmap='gray_r')
-    # plt.show()
-
     # set training hyperparameters
-    train_batch_size = 100
-    test_batch_size = 100
-    n_epochs = 50
-    learning_rate = 1e-4
+    train_batch_size = 64
+    test_batch_size = 64
+    n_epochs = 40
+    learning_rate = 1e-3
     seed = 100
     input_dim = (3, new_h, new_w)
     out_dim = 11

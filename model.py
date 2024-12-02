@@ -4,10 +4,6 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import random
 
-import torch
-import torch.nn as nn
-
-
 class CNN(nn.Module):
     """
     A Convolutional Neural Network for image classification.
@@ -46,14 +42,12 @@ class CNN(nn.Module):
         # Placeholder for the fully connected layer
         self.fc = None
 
-        # Flatten the output from conv3 and calculate the input size for the fully connected layer
-        # self.fc_inputs = 4480  # Output size after 3x2 pooling layers, reducing height and width to 4x4
         self.fc_inputs = self._calculate_fc_inputs()
 
         # Single fully connected layer
         self.fc = nn.Sequential(
             nn.Linear(self.fc_inputs, 64),
-            nn.Linear(64, self.out_dim)  # Only one fully connected layer with output size equal to number of classes (out_dim)
+            nn.Linear(64, self.out_dim)  
         )
 
     def _make_conv_layers(self):
@@ -93,16 +87,9 @@ class CNN(nn.Module):
         
         # Flatten the output
         x = x.view(x.size(0), -1)
-        
-        # # Initialize the fully connected layer if needed
-        # if self.fc is None:
-        #     self.fc = nn.Linear(x.size(1), self.out_dim).to(x.device)
-        
-        # Pass through the fully connected layer
         x = self.fc(x)
         return x 
  
-
 
 class CNN_small(nn.Module):
     
@@ -160,7 +147,6 @@ class CNN_small(nn.Module):
         x = x.view(x.size(0), -1)  # Flatten the output for the fully connected layer
         x = self.fc(x)
         return x
-
 
 
 # Function to calculate the total number of parameters

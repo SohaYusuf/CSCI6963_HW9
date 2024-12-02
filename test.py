@@ -1,8 +1,8 @@
 # Soha Yusuf (RIN: 662011092)
 # Shiuli Subhra Ghosh (RIN: )
-# Jainik Meheta (RIN: )
+# Jainik Meheta (RIN: 662096080)
 
-# python train_buildings.py
+# python test.py
 
 import torch
 import torch.optim as optim
@@ -73,14 +73,11 @@ if __name__ == '__main__':
     plot_data_images(val_dataset, name='buildings_images.png')
 
     # set training hyperparameters
-    test_batch_size = 100
-    n_epochs = 20
-    learning_rate = 1e-3
+    test_batch_size = 1
     seed = 100
     input_dim = (3, new_h, new_w)
     out_dim = 11
-    momentum = 0.9
-
+   
     print(f'input_dim: {input_dim}, out_dim: {out_dim}')
 
     # put data into loaders
@@ -93,16 +90,9 @@ if __name__ == '__main__':
     total_params = count_parameters(network)
     print(f"Total number of parameters: {total_params}")
 
-    optimizer = optim.SGD(network.parameters(), lr=learning_rate, momentum=momentum)
-
     model_path = 'models/'
     PATH = model_path + 'cnn_buildings.pth'
     
     network.load_state_dict(torch.load(PATH))
 
-    # sanity check -- output should be close to 1/11
-    print('Initial accuracy', flush=True)
-    test_acc, test_loss = test(network, test_loader, device)
-
-    print(f'Test accuracy: {test_acc}')
-    print(f'Test loss: {test_loss}')
+    test(network, test_loader, device)
