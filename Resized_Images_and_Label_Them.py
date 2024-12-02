@@ -63,7 +63,7 @@ def resize_images_and_create_csv(main_dir, output_dir, width, height, csv_path):
                             # Open and resize the image
                             with Image.open(input_path) as img:
                                 img_rgb = img.convert('RGB')
-                                resized_img = img_rgb.resize((width, height), Image.Resampling.LANCZOS)
+                                resized_img = img_rgb.resize((width, height), Image.Resampling.NEAREST)
                                 # Save the resized image in the output directory
                                 output_image_path = os.path.join(output_dir, file_name)
                                 resized_img.save(output_image_path)
@@ -77,8 +77,8 @@ def resize_images_and_create_csv(main_dir, output_dir, width, height, csv_path):
                         print(f"Error processing file {file_name}: {e}")
 
 # Example usage
-main_directory = "hw9\CSCI6963_HW9-my-code\Custom_Data_Set"  # Replace with the path to your main directory
-output_directory = "hw9\CSCI6963_HW9-my-code\Custom_Data_Set_Resized_v2"  # Replace with the path to your output directory
-csv_file_path = "hw9\CSCI6963_HW9-my-code\Custom_Data_Set_Resized_v2\Custom_Data_Set_Labels.csv"  # Replace with your desired CSV file path
+main_directory = "Custom_Data_Set/"  # Replace with the path to your main directory
+output_directory = "Custom_Data_Set_Resized_v2/"  # Replace with the path to your output directory
+csv_file_path = "Custom_Data_Set_Resized_v2/Custom_Data_Set_Labels.csv"  # Replace with your desired CSV file path
 
 resize_images_and_create_csv(main_directory, output_directory, 252, 189, csv_file_path)

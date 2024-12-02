@@ -4,37 +4,8 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import random
 
-class FC(nn.Module):
-    
-    def __init__(self, in_dim, out_dim, num_hidden_layers, layer_size):
-        super().__init__()
-
-        self.num_layers = num_hidden_layers * 2 + 3 # *2 accounts for ReLU layers, +3 is input layer, input relu layer, output layer
-
-        self.in_dim = in_dim
-        self.out_dim = out_dim        
-
-        self.layer_size = layer_size
-
-        self.layer_list = nn.ModuleList()
-
-        self.layer_list.append(nn.Linear(self.in_dim, self.layer_size))
-        self.num_hidden_layers = num_hidden_layers
-
-        for i in range(1,self.num_hidden_layers):
-            self.layer_list.append(nn.Linear(self.layer_size, self.layer_size))
-            
-
-        self.layer_list.append(nn.Linear(self.layer_size, self.out_dim))
-        
-    def forward(self, x):
-
-        x = x.view(-1, self.in_dim)
-
-        for i in range(self.num_hidden_layers):
-            x = F.relu(self.layer_list[i](x))
-
-        return self.layer_list[self.num_hidden_layers](x)
+import torch
+import torch.nn as nn
 
 
 class CNN(nn.Module):
@@ -62,7 +33,7 @@ class CNN(nn.Module):
         self.n_layers = n_layers
 
         # Define the number of filters for each layer
-        self.filters = [8, 16, 32, 64, 128]
+        self.filters = [16, 32, 64, 128, 256]
 
         # Convolution parameters
         self.kernel_size = (3, 3)
@@ -74,6 +45,16 @@ class CNN(nn.Module):
 
         # Placeholder for the fully connected layer
         self.fc = None
+
+        # Flatten the output from conv3 and calculate the input size for the fully connected layer
+        # self.fc_inputs = 4480  # Output size after 3x2 pooling layers, reducing height and width to 4x4
+        self.fc_inputs = self._calculate_fc_inputs()
+
+        # Single fully connected layer
+        self.fc = nn.Sequential(
+            nn.Linear(self.fc_inputs, 64),
+            nn.Linear(64, self.out_dim)  # Only one fully connected layer with output size equal to number of classes (out_dim)
+        )
 
     def _make_conv_layers(self):
         """Construct convolutional layers and return as a ModuleList."""
@@ -87,9 +68,23 @@ class CNN(nn.Module):
                 nn.BatchNorm2d(out_channels),
                 nn.ReLU(inplace=True),
                 nn.MaxPool2d(kernel_size=2, stride=2),
-                # nn.Dropout(p=0.05)
+                nn.Dropout(p=0.01)
             ))
         return nn.ModuleList(layers)
+    
+    def _calculate_fc_inputs(self):
+        """Calculate the input size for the fully connected layer using the dimensions after n layers of pooling."""
+        # The output size after pooling is reduced by a factor of 2 for each pooling layer
+        final_height = self.in_dim[1] // (2 ** self.n_layers)  # in_dim[1] is the height
+        final_width = self.in_dim[2] // (2 ** self.n_layers)   # in_dim[2] is the width
+
+        # The number of filters after the final convolutional layer
+        final_filters = self.filters[min(self.n_layers - 1, len(self.filters) - 1)]
+        
+        # Calculate the number of inputs to the fully connected layer
+        fc_inputs = final_filters * final_height * final_width
+        return fc_inputs
+
 
     def forward(self, x):
         """Forward pass through the network."""
@@ -99,9 +94,9 @@ class CNN(nn.Module):
         # Flatten the output
         x = x.view(x.size(0), -1)
         
-        # Initialize the fully connected layer if needed
-        if self.fc is None:
-            self.fc = nn.Linear(x.size(1), self.out_dim).to(x.device)
+        # # Initialize the fully connected layer if needed
+        # if self.fc is None:
+        #     self.fc = nn.Linear(x.size(1), self.out_dim).to(x.device)
         
         # Pass through the fully connected layer
         x = self.fc(x)
@@ -185,19 +180,19 @@ def plot_results(train_list, test_list, name, plot_accuracy=True, plot_loss=Fals
 
     if plot_accuracy:
         label1 = 'Train Accuracy'
-        label2 = 'Test Accuracy'
+        label2 = 'Val Accuracy'
         xlabel = 'Epochs'
         ylabel = 'Accuracy'
 
     if plot_loss:
         label1 = 'Train loss'
-        label2 = 'Test loss'
+        label2 = 'Val loss'
         xlabel = 'Epochs'
         ylabel = 'Loss'
 
     # Plotting both training and test accuracy
-    plt.plot(train_list, label=label1, color='blue', marker='o')
-    plt.plot(test_list, label=label2, color='orange', marker='o')
+    plt.plot(epochs, train_list, label=label1, color='blue', marker='o')
+    plt.plot(epochs, test_list, label=label2, color='orange', marker='o')
 
     # Configure x-axis and y-axis
     plt.xscale('linear')  # Change to 'log' if you want logarithmic scaling

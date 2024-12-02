@@ -129,6 +129,11 @@ if __name__ == '__main__':
     # Data augmentation for training
     train_transforms = torchvision.transforms.Compose([
         torchvision.transforms.RandomHorizontalFlip(),           # Randomly flip images horizontally
+        torchvision.transforms.RandomVerticalFlip(),
+        torchvision.transforms.RandomRotation(degrees=30),
+        # torchvision.transforms.RandomAffine(degrees=0, scale=(0.8, 1.2)),
+        # torchvision.transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+        # torchvision.transforms.RandomGrayscale(p=0.1),
         torchvision.transforms.RandomCrop(size=(new_h, new_w), padding=4),  # Random crop with padding
         resize,
         convert,
@@ -141,10 +146,13 @@ if __name__ == '__main__':
     val_labels_dir = os.path.join(data_dir, 'val_labels.csv')
 
     train_dataset = BuildingDataset(train_labels_dir, data_dir, transform=train_transforms)
-    val_dataset = BuildingDataset(val_labels_dir, data_dir, transform=test_transforms)
+    test_dataset = BuildingDataset(val_labels_dir, data_dir, transform=test_transforms)
+
+    # train_dataset, val_dataset = split_train_val(train_dataset, valid_ratio=0.05)
 
     plot_data_images(train_dataset, name=f'{save_path}/buildings_train_images.png')
-    plot_data_images(val_dataset, name=f'{save_path}/buildings_test_images.png')
+    # plot_data_images(val_dataset, name=f'{save_path}/buildings_val_images.png')
+    plot_data_images(test_dataset, name=f'{save_path}/buildings_test_images.png')
 
     # # Plotting (leaving this here in case you'd like to take a look)
     # image = train_dataset[10][0]
@@ -152,14 +160,14 @@ if __name__ == '__main__':
 
     # plt.figure()
     # plt.imshow(image)
-    # #plt.imshow(torch.reshape(image, (new_h, new_w)), cmap='gray_r')
+    # plt.imshow(torch.reshape(image, (new_h, new_w)), cmap='gray_r')
     # plt.show()
 
     # set training hyperparameters
     train_batch_size = 100
     test_batch_size = 100
-    n_epochs = 20
-    learning_rate = 1e-3
+    n_epochs = 50
+    learning_rate = 1e-4
     seed = 100
     input_dim = (3, new_h, new_w)
     out_dim = 11
@@ -169,14 +177,14 @@ if __name__ == '__main__':
 
     # put data into loaders
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(val_dataset, batch_size=test_batch_size, shuffle=False)
+    # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=train_batch_size, shuffle=False)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=test_batch_size, shuffle=False)
 
     network = CNN(in_dim=input_dim, out_dim=out_dim, n_layers=5)
-    network = network.to(device)
-
     # Compute the total number of parameters
     total_params = count_parameters(network)
     print(f"Total number of parameters: {total_params}")
+    network = network.to(device)
 
     optimizer = optim.SGD(network.parameters(), lr=learning_rate, momentum=momentum)
 
@@ -194,27 +202,30 @@ if __name__ == '__main__':
     test(network, test_loader, device)
 
     train_accuracy_list = []
-    test_accuracy_list = []
+    val_accuracy_list = []
 
     train_loss_list = []
-    test_loss_list = []
+    val_loss_list = []
 
     # training loop
     for epoch in range(1, n_epochs + 1):
         train_acc, train_loss = train(network, train_loader, optimizer, epoch, device)
-        test_acc, test_loss = test(network, test_loader, device)
+        val_acc, val_loss = test(network, test_loader, device)
 
         train_accuracy_list.append(train_acc)
-        test_accuracy_list.append(test_acc)
+        val_accuracy_list.append(val_acc)
 
         train_loss_list.append(train_loss)
-        test_loss_list.append(test_loss)
+        val_loss_list.append(val_loss)
 
+
+    test_acc, test_loss = test(network, test_loader, device)
+    print(f'Final test accuracy: {test_acc}, Final test loss: {test_loss}')
     torch.save(network.state_dict(), PATH)
 
     # Save the accuracies to separate text files
     np.savetxt(f'{save_path}/RPI_train_accuracies.txt', train_accuracy_list, header='Train Accuracy', delimiter=',', fmt='%f')
-    np.savetxt(f'{save_path}/RPI_test_accuracies.txt', test_accuracy_list, header='Test Accuracy', delimiter=',', fmt='%f')
+    np.savetxt(f'{save_path}/RPI_val_accuracies.txt', val_accuracy_list, header='Val Accuracy', delimiter=',', fmt='%f')
 
-    plot_results(train_accuracy_list, test_accuracy_list, name=f'{save_path}/RPI_accuracy_plot.png', plot_accuracy=True)
-    plot_results(train_loss_list, test_loss_list, name=f'{save_path}/RPI_loss_plot.png', plot_loss=True)
+    plot_results(train_accuracy_list, val_accuracy_list, name=f'{save_path}/RPI_accuracy_plot.png', plot_accuracy=True)
+    plot_results(train_loss_list, val_loss_list, name=f'{save_path}/RPI_loss_plot.png', plot_loss=True)

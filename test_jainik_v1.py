@@ -54,37 +54,31 @@ def test(net, loader, device):
 
 if __name__ == '__main__':
 
-    # image parameters
-    resize_factor = 1
-    new_h = int(IMAGE_HEIGHT / resize_factor)
-    new_w = int(IMAGE_WIDTH / resize_factor)
+    save_path = "results_buildings/"
+    os.makedirs(save_path, exist_ok=True)
 
     # feel free to change the hardcoded numbers -- they are from the CIFAR10 code
     normalize = torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.225, 0.225, 0.225])
-    resize = torchvision.transforms.Resize(size = (new_h, new_w))
     convert = torchvision.transforms.ConvertImageDtype(torch.float)
     
-    test_transforms = torchvision.transforms.Compose([resize, convert, normalize])
+    test_transforms = torchvision.transforms.Compose([convert, normalize])
 
-    data_dir = 'data/'
-    val_labels_dir = os.path.join(data_dir, 'val_labels.csv')
-    val_dataset = BuildingDataset(val_labels_dir, data_dir, transform=test_transforms)
+    data_dir = 'Custom_Data_Set/'
+    test_labels_dir = os.path.join(data_dir, 'Custom_Data_Set_Labels.csv')
+    test_dataset = BuildingDataset(test_labels_dir, data_dir, transform=test_transforms)
 
-    plot_data_images(val_dataset, name='buildings_images.png')
+    plot_data_images(test_dataset, name=f'{save_path}/buildings_test_our_images.png')
 
-    # set training hyperparameters
-    test_batch_size = 100
-    n_epochs = 20
-    learning_rate = 1e-3
     seed = 100
-    input_dim = (3, new_h, new_w)
+    input_dim = (3, IMAGE_HEIGHT, IMAGE_WIDTH)
     out_dim = 11
-    momentum = 0.9
+    test_batch_size = 1
 
     print(f'input_dim: {input_dim}, out_dim: {out_dim}')
 
     # put data into loaders
-    test_loader = torch.utils.data.DataLoader(val_dataset, batch_size=test_batch_size, shuffle=False)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=test_batch_size, shuffle=False)
+    # test_loader = torch.utils.data.DataLoader(test_dataset, shuffle=False)
 
     network = CNN(in_dim=input_dim, out_dim=out_dim, n_layers=5)
     network = network.to(device)
@@ -93,16 +87,23 @@ if __name__ == '__main__':
     total_params = count_parameters(network)
     print(f"Total number of parameters: {total_params}")
 
-    optimizer = optim.SGD(network.parameters(), lr=learning_rate, momentum=momentum)
+    PATH = 'models/cnn_buildings.pth'
 
-    model_path = 'models/'
-    PATH = model_path + 'cnn_buildings.pth'
+    model_dict = network.state_dict()
+    pretrained_dict = torch.load(PATH)
+
+    # Filter out unnecessary keys
+    pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+
+    # Overwrite the existing model weights
+    model_dict.update(pretrained_dict)
+
+    # Load the updated state_dict into the model
+    network.load_state_dict(model_dict)
+
+    # network.load_state_dict(torch.load(PATH, weights_only=True))
     
-    network.load_state_dict(torch.load(PATH))
+    # if len(sys.argv) > 1 and sys.argv[1] == 'load':
+    #     network.load_state_dict(torch.load(MODEL_PATH))
 
-    # sanity check -- output should be close to 1/11
-    print('Initial accuracy', flush=True)
-    test_acc, test_loss = test(network, test_loader, device)
-
-    print(f'Test accuracy: {test_acc}')
-    print(f'Test loss: {test_loss}')
+    test(network, test_loader, device)
